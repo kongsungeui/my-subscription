@@ -1,0 +1,50 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+enum Currency {
+  KRW
+  USD
+}
+
+enum BillingCycle {
+  MONTHLY
+  YEARLY
+}
+
+enum ThemeMode {
+  LIGHT
+  DARK
+  AUTO_TIME
+  AUTO_SUN
+}
+
+model Subscription {
+  id           Int          @id @default(autoincrement())
+  name         String
+  amountMinor  Int
+  currency     Currency
+  billingCycle BillingCycle
+  renewalDate  DateTime?
+  memo         String?
+  isActive     Boolean      @default(true)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+}
+
+model Settings {
+  id           Int       @id @default(1)
+  usdToKrwRate Int       @default(1350)
+  themeMode    ThemeMode @default(LIGHT)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
