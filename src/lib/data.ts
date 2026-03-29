@@ -1,4 +1,4 @@
-import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
+import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@prisma/client";
 import type {
   BillingCycle,
@@ -11,8 +11,8 @@ declare global {
   var prismaGlobal: PrismaClient | undefined;
 }
 
-const adapter = new PrismaBetterSqlite3({
-  url: process.env.DATABASE_URL ?? "file:./prisma/dev.db",
+const adapter = new PrismaPg({
+  connectionString: process.env.DATABASE_URL,
 });
 
 export const prisma =
@@ -23,16 +23,10 @@ if (process.env.NODE_ENV !== "production") {
 }
 
 export async function requireSettings() {
-  const existing = await prisma.settings.findUnique({
+  return prisma.settings.upsert({
     where: { id: 1 },
-  });
-
-  if (existing) {
-    return existing;
-  }
-
-  return prisma.settings.create({
-    data: {
+    update: {},
+    create: {
       id: 1,
       usdToKrwRate: 1350,
       themeMode: "LIGHT",
