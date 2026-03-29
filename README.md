@@ -1,36 +1,105 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# My Subscription
 
-## Getting Started
+개인 구독 서비스를 한눈에 관리하는 대시보드 앱입니다. Netflix, ChatGPT 등 반복 결제 서비스를 등록하고, 월/연 단위 총 지출을 KRW로 환산해 확인할 수 있습니다.
 
-First, run the development server:
+## 주요 기능
+
+- **구독 관리** — 구독 추가 / 수정 / 삭제 / 활성·비활성 토글
+- **다중 통화 지원** — KRW / USD 입력, 자동 환율 환산
+- **결제 주기** — 월간(MONTHLY) / 연간(YEARLY) 구분
+- **갱신일 추적** — 다음 결제일 등록 및 표시
+- **지출 요약** — 월 총액 / 연 총액 KRW 카드
+- **환율 설정** — USD→KRW 환율 직접 조정
+- **테마** — Light / Dark / 시간 자동 / 일출·일몰 자동 전환
+- **세션 인증** — 쿠키 기반 로그인 (7일 유지)
+- **로컬 DB** — SQLite 내장, 외부 데이터베이스 불필요
+
+## 기술 스택
+
+| 영역 | 기술 |
+|------|------|
+| 프레임워크 | Next.js 16 (App Router) |
+| UI | React 19, Tailwind CSS 4 |
+| ORM | Prisma 7 |
+| 데이터베이스 | SQLite (`better-sqlite3`) |
+| 언어 | TypeScript 5 |
+
+## 프로젝트 구조
+
+```
+src/
+├── app/
+│   ├── page.tsx        # 메인 대시보드 (로그인 / 구독 목록)
+│   ├── layout.tsx      # 루트 레이아웃 (테마 적용)
+│   ├── actions.ts      # 서버 액션 (CRUD, 로그인, 설정)
+│   └── globals.css     # 전역 스타일 & 테마 CSS 변수
+└── lib/
+    ├── data.ts         # Prisma 클라이언트, DB 헬퍼, 포맷 유틸
+    └── auth.ts         # 쿠키 기반 세션 인증
+prisma/
+└── schema.prisma       # Subscription, Settings 모델 정의
+```
+
+## 시작하기
+
+### 1. 의존성 설치
+
+```bash
+npm install
+# postinstall 스크립트에서 Prisma 클라이언트가 자동 생성됩니다.
+```
+
+### 2. 환경 변수 설정
+
+프로젝트 루트에 `.env.local` 파일을 생성합니다.
+
+```env
+DATABASE_URL="file:./dev.db"
+```
+
+### 3. 데이터베이스 마이그레이션
+
+```bash
+npx prisma migrate dev
+```
+
+### 4. 개발 서버 실행
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+브라우저에서 [http://localhost:3000](http://localhost:3000)을 열면 로그인 화면이 나타납니다.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+> 인증 정보는 `src/lib/auth.ts`에서 확인 및 변경할 수 있습니다.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 스크립트
 
-## Learn More
+| 명령어 | 설명 |
+|--------|------|
+| `npm run dev` | 개발 서버 시작 (webpack 모드) |
+| `npm run build` | 프로덕션 빌드 |
+| `npm start` | 프로덕션 서버 시작 |
+| `npm run lint` | ESLint 실행 |
 
-To learn more about Next.js, take a look at the following resources:
+## 데이터베이스 스키마
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Subscription
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+| 필드 | 타입 | 설명 |
+|------|------|------|
+| id | Int | PK |
+| name | String | 서비스명 |
+| amountMinor | Int | 금액 (USD: 센트, KRW: 원 단위) |
+| currency | KRW \| USD | 통화 |
+| billingCycle | MONTHLY \| YEARLY | 결제 주기 |
+| renewalDate | DateTime? | 다음 갱신일 |
+| memo | String? | 메모 |
+| isActive | Boolean | 활성 여부 |
 
-## Deploy on Vercel
+### Settings (싱글턴)
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+| 필드 | 타입 | 기본값 |
+|------|------|--------|
+| usdToKrwRate | Int | 1350 |
+| themeMode | LIGHT \| DARK \| AUTO_TIME \| AUTO_SUN | LIGHT |

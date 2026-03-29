@@ -144,7 +144,6 @@ export function subscriptionPayloadFromFormData(
 ): Prisma.SubscriptionUncheckedCreateInput {
   const currency = String(formData.get("currency")) as Currency;
   const billingCycle = String(formData.get("billingCycle")) as BillingCycle;
-  const renewalDateValue = String(formData.get("renewalDate") ?? "");
   const memo = String(formData.get("memo") ?? "").trim();
 
   return {
@@ -152,7 +151,6 @@ export function subscriptionPayloadFromFormData(
     amountMinor: parseAmountToMinor(String(formData.get("amount") ?? ""), currency),
     currency,
     billingCycle,
-    renewalDate: renewalDateValue ? new Date(renewalDateValue) : null,
     memo: memo || null,
     isActive: formData.get("isActive") === "on",
   };

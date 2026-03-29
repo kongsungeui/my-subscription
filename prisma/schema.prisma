@@ -34,7 +34,6 @@ model Subscription {
   amountMinor  Int
   currency     Currency
   billingCycle BillingCycle
-  renewalDate  DateTime?
   memo         String?
   isActive     Boolean      @default(true)
   createdAt    DateTime     @default(now())

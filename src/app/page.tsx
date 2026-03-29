@@ -1,12 +1,9 @@
 import {
-  createSubscriptionAction,
-  deleteSubscriptionAction,
   loginAction,
   logoutAction,
-  toggleSubscriptionAction,
   updateSettingsAction,
-  updateSubscriptionAction,
 } from "@/app/actions";
+import { SubscriptionList } from "@/app/dashboard-client";
 import { isAuthenticated } from "@/lib/auth";
 import {
   formatDisplayAmount,
@@ -100,26 +97,6 @@ function Select({
   );
 }
 
-function Textarea({
-  label,
-  name,
-  defaultValue,
-}: {
-  label: string;
-  name: string;
-  defaultValue?: string | null;
-}) {
-  return (
-    <label className="space-y-2 text-sm text-[var(--muted)]">
-      <span>{label}</span>
-      <textarea
-        className="min-h-24 w-full rounded-2xl border border-[var(--border)] bg-[var(--input)] px-4 py-3 text-sm text-[var(--foreground)] outline-none transition focus:border-[var(--accent)]"
-        defaultValue={defaultValue ?? ""}
-        name={name}
-      />
-    </label>
-  );
-}
 
 function LoginView({ error }: { error?: string }) {
   return (
@@ -182,6 +159,18 @@ export default async function Home({ searchParams }: PageProps) {
     getSummary(),
   ]);
 
+  const serializedSubscriptions = subscriptions.map((s) => ({
+    id: s.id,
+    name: s.name,
+    amountMinor: s.amountMinor,
+    currency: s.currency as "KRW" | "USD",
+    billingCycle: s.billingCycle as "MONTHLY" | "YEARLY",
+    memo: s.memo,
+    isActive: s.isActive,
+    amountDisplayFull: formatDisplayAmount(s.amountMinor, s.currency),
+    amountDisplayRaw: s.currency === "USD" ? String(s.amountMinor / 100) : String(s.amountMinor),
+  }));
+
   return (
     <main className="min-h-screen bg-[var(--background)] px-4 py-4 sm:px-6 sm:py-6">
       <div className="mx-auto max-w-7xl">
@@ -222,209 +211,14 @@ export default async function Home({ searchParams }: PageProps) {
         </Panel>
 
         <div className="grid gap-4 xl:grid-cols-[minmax(0,1.65fr)_360px]">
-          <Panel className="overflow-hidden">
-            <div className="flex items-center justify-between border-b border-[var(--border)] px-5 py-4 sm:px-6">
-              <div>
-                <p className="text-[11px] uppercase tracking-[0.34em] text-[var(--muted)]">
-                  Subscriptions
-                </p>
-                <h2 className="mt-1 text-lg font-semibold text-[var(--foreground)]">
-                  구독 리스트
-                </h2>
-              </div>
-              <p className="text-sm text-[var(--muted)]">
-                활성 {summary.activeCount} / 전체 {subscriptions.length}
-              </p>
-            </div>
-
-            <div className="overflow-x-auto">
-              <table className="min-w-full text-left">
-                <thead className="bg-[var(--surface)] text-[11px] uppercase tracking-[0.26em] text-[var(--muted)]">
-                  <tr>
-                    <th className="px-5 py-4 sm:px-6">서비스</th>
-                    <th className="px-5 py-4">금액</th>
-                    <th className="px-5 py-4">주기</th>
-                    <th className="px-5 py-4">다음 결제일</th>
-                    <th className="px-5 py-4">상태</th>
-                    <th className="px-5 py-4 text-right">관리</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {subscriptions.length === 0 ? (
-                    <tr>
-                      <td
-                        className="px-5 py-12 text-sm text-[var(--muted)] sm:px-6"
-                        colSpan={6}
-                      >
-                        등록된 구독이 없습니다. 오른쪽 패널에서 바로 추가할 수
-                        있습니다.
-                      </td>
-                    </tr>
-                  ) : null}
-
-                  {subscriptions.map((subscription) => (
-                    <tr
-                      key={subscription.id}
-                      className="group border-t border-[var(--border)] text-sm text-[var(--foreground)] transition hover:bg-[var(--surface)]/80"
-                    >
-                      <td className="px-5 py-4 sm:px-6">
-                        <div className="font-medium">{subscription.name}</div>
-                        <div className="mt-1 max-w-[260px] truncate text-xs text-[var(--muted)]">
-                          {subscription.memo || "메모 없음"}
-                        </div>
-                      </td>
-                      <td className="px-5 py-4">
-                        {formatDisplayAmount(
-                          subscription.amountMinor,
-                          subscription.currency,
-                        )}
-                      </td>
-                      <td className="px-5 py-4">
-                        {subscription.billingCycle === "MONTHLY"
-                          ? "월 결제"
-                          : "연 결제"}
-                      </td>
-                      <td className="px-5 py-4 text-[var(--muted)]">
-                        {subscription.renewalDate
-                          ? new Intl.DateTimeFormat("ko-KR", {
-                              dateStyle: "medium",
-                            }).format(subscription.renewalDate)
-                          : "-"}
-                      </td>
-                      <td className="px-5 py-4">
-                        <span
-                          className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${
-                            subscription.isActive
-                              ? "bg-emerald-500/12 text-emerald-300"
-                              : "bg-zinc-500/12 text-[var(--muted)]"
-                          }`}
-                        >
-                          {subscription.isActive ? "활성" : "비활성"}
-                        </span>
-                      </td>
-                      <td className="px-5 py-4 text-right">
-                        <details className="inline-block text-left">
-                          <summary className="cursor-pointer list-none rounded-full border border-transparent px-3 py-1.5 text-xs font-medium text-[var(--muted)] opacity-100 transition hover:border-[var(--accent)] hover:text-[var(--foreground)] sm:opacity-0 sm:group-hover:opacity-100">
-                            수정
-                          </summary>
-                          <div className="mt-3 w-[min(92vw,34rem)] rounded-[1.5rem] border border-[var(--border)] bg-[var(--card)] p-4 shadow-[var(--shadow-strong)]">
-                            <form
-                              action={updateSubscriptionAction}
-                              className="grid gap-3 md:grid-cols-2"
-                            >
-                              <input
-                                name="id"
-                                type="hidden"
-                                value={subscription.id}
-                              />
-                              <Input
-                                defaultValue={subscription.name}
-                                label="서비스명"
-                                name="name"
-                                required
-                              />
-                              <Input
-                                defaultValue={formatDisplayAmount(
-                                  subscription.amountMinor,
-                                  subscription.currency,
-                                  false,
-                                )}
-                                label="금액"
-                                min={0}
-                                name="amount"
-                                required
-                                step="0.01"
-                                type="number"
-                              />
-                              <Select
-                                defaultValue={subscription.currency}
-                                label="통화"
-                                name="currency"
-                                options={[
-                                  { label: "원화 (KRW)", value: "KRW" },
-                                  { label: "달러 (USD)", value: "USD" },
-                                ]}
-                              />
-                              <Select
-                                defaultValue={subscription.billingCycle}
-                                label="결제 주기"
-                                name="billingCycle"
-                                options={[
-                                  { label: "월 결제", value: "MONTHLY" },
-                                  { label: "연 결제", value: "YEARLY" },
-                                ]}
-                              />
-                              <Input
-                                defaultValue={
-                                  subscription.renewalDate
-                                    ? subscription.renewalDate
-                                        .toISOString()
-                                        .slice(0, 10)
-                                    : ""
-                                }
-                                label="다음 결제일"
-                                name="renewalDate"
-                                type="date"
-                              />
-                              <label className="flex items-center gap-3 rounded-2xl border border-[var(--border)] bg-[var(--input)] px-4 py-3 text-sm text-[var(--foreground)]">
-                                <input
-                                  defaultChecked={subscription.isActive}
-                                  name="isActive"
-                                  type="checkbox"
-                                />
-                                합산에 포함
-                              </label>
-                              <div className="md:col-span-2">
-                                <Textarea
-                                  defaultValue={subscription.memo}
-                                  label="메모"
-                                  name="memo"
-                                />
-                              </div>
-                              <div className="md:col-span-2 flex flex-wrap justify-between gap-2">
-                                <div className="flex gap-2">
-                                  <form action={toggleSubscriptionAction}>
-                                    <input
-                                      name="id"
-                                      type="hidden"
-                                      value={subscription.id}
-                                    />
-                                    <input
-                                      name="isActive"
-                                      type="hidden"
-                                      value={String(subscription.isActive)}
-                                    />
-                                    <button className="rounded-full border border-[var(--border)] px-4 py-2 text-sm text-[var(--foreground)] transition hover:border-[var(--accent)]">
-                                      {subscription.isActive
-                                        ? "비활성화"
-                                        : "활성화"}
-                                    </button>
-                                  </form>
-                                  <form action={deleteSubscriptionAction}>
-                                    <input
-                                      name="id"
-                                      type="hidden"
-                                      value={subscription.id}
-                                    />
-                                    <button className="rounded-full border border-rose-500/30 px-4 py-2 text-sm text-rose-300 transition hover:bg-rose-500/10">
-                                      삭제
-                                    </button>
-                                  </form>
-                                </div>
-                                <button className="rounded-full bg-[var(--accent)] px-4 py-2 text-sm font-semibold text-[var(--accent-foreground)] transition hover:opacity-90">
-                                  저장
-                                </button>
-                              </div>
-                            </form>
-                          </div>
-                        </details>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </Panel>
+          <SubscriptionList
+            subscriptions={serializedSubscriptions}
+            summary={{
+              monthlyTotalKrw: summary.monthlyTotalKrw,
+              yearlyTotalKrw: summary.yearlyTotalKrw,
+              activeCount: summary.activeCount,
+            }}
+          />
 
           <div className="space-y-4">
             <Panel className="p-5 sm:p-6">
@@ -457,56 +251,6 @@ export default async function Home({ searchParams }: PageProps) {
                   </p>
                 </div>
               </div>
-            </Panel>
-
-            <Panel className="p-5 sm:p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-[11px] uppercase tracking-[0.34em] text-[var(--muted)]">
-                    Add
-                  </p>
-                  <h2 className="mt-1 text-lg font-semibold text-[var(--foreground)]">
-                    구독 추가
-                  </h2>
-                </div>
-              </div>
-
-              <form action={createSubscriptionAction} className="mt-5 grid gap-3">
-                <Input label="서비스명" name="name" required />
-                <Input
-                  label="금액"
-                  min={0}
-                  name="amount"
-                  required
-                  step="0.01"
-                  type="number"
-                />
-                <Select
-                  label="통화"
-                  name="currency"
-                  options={[
-                    { label: "원화 (KRW)", value: "KRW" },
-                    { label: "달러 (USD)", value: "USD" },
-                  ]}
-                />
-                <Select
-                  label="결제 주기"
-                  name="billingCycle"
-                  options={[
-                    { label: "월 결제", value: "MONTHLY" },
-                    { label: "연 결제", value: "YEARLY" },
-                  ]}
-                />
-                <Input label="다음 결제일" name="renewalDate" type="date" />
-                <Textarea label="메모" name="memo" />
-                <label className="flex items-center gap-3 rounded-2xl border border-[var(--border)] bg-[var(--input)] px-4 py-3 text-sm text-[var(--foreground)]">
-                  <input defaultChecked name="isActive" type="checkbox" />
-                  바로 합산에 포함
-                </label>
-                <button className="rounded-full bg-[var(--accent)] px-5 py-3 text-sm font-semibold text-[var(--accent-foreground)] transition hover:opacity-90">
-                  추가하기
-                </button>
-              </form>
             </Panel>
 
             <Panel className="p-5 sm:p-6">
