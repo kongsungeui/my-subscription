@@ -210,6 +210,8 @@ function SubscriptionModal({
             defaultValue={sub?.billingCycle ?? "MONTHLY"}
             options={[
               { label: "월 결제", value: "MONTHLY" },
+              { label: "3개월 결제", value: "QUARTERLY" },
+              { label: "6개월 결제", value: "SEMI_ANNUAL" },
               { label: "연 결제", value: "YEARLY" },
             ]}
           />
@@ -343,7 +345,7 @@ export function SubscriptionList({
                   </td>
                   <td className="px-5 py-4">{sub.amountDisplayFull}</td>
                   <td className="px-5 py-4">
-                    {sub.billingCycle === "MONTHLY" ? "월 결제" : "연 결제"}
+                    {{ MONTHLY: "월 결제", QUARTERLY: "3개월", SEMI_ANNUAL: "6개월", YEARLY: "연 결제" }[sub.billingCycle]}
                   </td>
                   <td className="px-5 py-4">
                     <span

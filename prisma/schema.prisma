@@ -18,6 +18,8 @@ enum Currency {
 
 enum BillingCycle {
   MONTHLY
+  QUARTERLY
+  SEMI_ANNUAL
   YEARLY
 }
 

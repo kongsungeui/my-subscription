@@ -61,11 +61,14 @@ export async function getSummary() {
 
     activeCount += 1;
 
-    const annualKrw =
-      subscription.billingCycle === "YEARLY"
-        ? convertToKrw(subscription.amountMinor, subscription.currency, settings)
-        : convertToKrw(subscription.amountMinor, subscription.currency, settings) *
-          12;
+    const amountKrw = convertToKrw(subscription.amountMinor, subscription.currency, settings);
+    const annualMultiplier: Record<string, number> = {
+      MONTHLY: 12,
+      QUARTERLY: 4,
+      SEMI_ANNUAL: 2,
+      YEARLY: 1,
+    };
+    const annualKrw = amountKrw * (annualMultiplier[subscription.billingCycle] ?? 12);
 
     yearlyTotalKrw += annualKrw;
     monthlyTotalKrw += annualKrw / 12;
