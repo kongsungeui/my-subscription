@@ -263,6 +263,7 @@ export default async function Home({ searchParams }: PageProps) {
 
               <form action={updateSettingsAction} className="mt-5 space-y-3">
                 <Input
+                  key={settings.usdToKrwRate}
                   defaultValue={settings.usdToKrwRate}
                   label="USD 환율 (KRW)"
                   min={1}
@@ -272,6 +273,7 @@ export default async function Home({ searchParams }: PageProps) {
                   type="number"
                 />
                 <Select
+                  key={settings.themeMode}
                   defaultValue={settings.themeMode}
                   label="테마"
                   name="themeMode"
