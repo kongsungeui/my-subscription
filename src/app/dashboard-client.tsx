@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useTransition, useState } from "react";
 import {
   createSubscriptionAction,
   deleteSubscriptionAction,
@@ -118,8 +118,41 @@ function SubscriptionModal({
   state: ModalState;
   onClose: () => void;
 }) {
+  const [isPending, startTransition] = useTransition();
   const isEdit = state.mode === "edit";
   const sub = isEdit ? state.sub : null;
+
+  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    startTransition(async () => {
+      if (isEdit) {
+        await updateSubscriptionAction(formData);
+      } else {
+        await createSubscriptionAction(formData);
+      }
+      onClose();
+    });
+  }
+
+  function handleToggle() {
+    const formData = new FormData();
+    formData.set("id", String(sub!.id));
+    formData.set("isActive", String(sub!.isActive));
+    startTransition(async () => {
+      await toggleSubscriptionAction(formData);
+      onClose();
+    });
+  }
+
+  function handleDelete() {
+    const formData = new FormData();
+    formData.set("id", String(sub!.id));
+    startTransition(async () => {
+      await deleteSubscriptionAction(formData);
+      onClose();
+    });
+  }
 
   return (
     <div
@@ -144,10 +177,7 @@ function SubscriptionModal({
           </button>
         </div>
 
-        <form
-          action={isEdit ? updateSubscriptionAction : createSubscriptionAction}
-          className="grid gap-3 md:grid-cols-2"
-        >
+        <form onSubmit={handleSubmit} className="grid gap-3 md:grid-cols-2">
           {isEdit && <input type="hidden" name="id" value={sub!.id} />}
 
           <Input
@@ -199,44 +229,39 @@ function SubscriptionModal({
           {isEdit ? (
             <div className="md:col-span-2 flex flex-wrap items-center justify-between gap-2">
               <div className="flex gap-2">
-                <form action={toggleSubscriptionAction}>
-                  <input type="hidden" name="id" value={sub!.id} />
-                  <input
-                    type="hidden"
-                    name="isActive"
-                    value={String(sub!.isActive)}
-                  />
-                  <button
-                    type="submit"
-                    className="rounded-full border border-[var(--border)] px-4 py-2 text-sm text-[var(--foreground)] transition hover:border-[var(--accent)]"
-                  >
-                    {sub!.isActive ? "비활성화" : "활성화"}
-                  </button>
-                </form>
-                <form action={deleteSubscriptionAction}>
-                  <input type="hidden" name="id" value={sub!.id} />
-                  <button
-                    type="submit"
-                    className="rounded-full border border-rose-500/30 px-4 py-2 text-sm text-rose-300 transition hover:bg-rose-500/10"
-                  >
-                    삭제
-                  </button>
-                </form>
+                <button
+                  type="button"
+                  onClick={handleToggle}
+                  disabled={isPending}
+                  className="rounded-full border border-[var(--border)] px-4 py-2 text-sm text-[var(--foreground)] transition hover:border-[var(--accent)] disabled:opacity-50"
+                >
+                  {sub!.isActive ? "비활성화" : "활성화"}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDelete}
+                  disabled={isPending}
+                  className="rounded-full border border-rose-500/30 px-4 py-2 text-sm text-rose-300 transition hover:bg-rose-500/10 disabled:opacity-50"
+                >
+                  삭제
+                </button>
               </div>
               <button
                 type="submit"
-                className="rounded-full bg-[var(--accent)] px-5 py-2 text-sm font-semibold text-[var(--accent-foreground)] transition hover:opacity-90"
+                disabled={isPending}
+                className="rounded-full bg-[var(--accent)] px-5 py-2 text-sm font-semibold text-[var(--accent-foreground)] transition hover:opacity-90 disabled:opacity-50"
               >
-                저장
+                {isPending ? "저장 중…" : "저장"}
               </button>
             </div>
           ) : (
             <div className="md:col-span-2">
               <button
                 type="submit"
-                className="w-full rounded-full bg-[var(--accent)] px-5 py-3 text-sm font-semibold text-[var(--accent-foreground)] transition hover:opacity-90"
+                disabled={isPending}
+                className="w-full rounded-full bg-[var(--accent)] px-5 py-3 text-sm font-semibold text-[var(--accent-foreground)] transition hover:opacity-90 disabled:opacity-50"
               >
-                추가하기
+                {isPending ? "추가 중…" : "추가하기"}
               </button>
             </div>
           )}
