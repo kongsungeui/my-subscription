@@ -82,7 +82,7 @@ npm run build
 
 ```bash
 sudo npm install -g pm2
-pm2 start npm --name "my-subscription" -- start
+PORT=8001 pm2 start npm --name "my-subscription" -- start
 pm2 save
 pm2 startup   # 출력된 명령어를 그대로 복사해서 실행
 ```
@@ -133,5 +133,5 @@ git pull
 npm install
 npx prisma migrate deploy   # 스키마 변경이 없으면 생략
 npm run build
-pm2 restart my-subscription
+PORT=8001 pm2 restart my-subscription
 ```
