@@ -23,15 +23,16 @@ if (process.env.NODE_ENV !== "production") {
 }
 
 export async function requireSettings() {
-  return prisma.settings.upsert({
-    where: { id: 1 },
-    update: {},
-    create: {
-      id: 1,
-      usdToKrwRate: 1350,
-      themeMode: "LIGHT",
-    },
-  });
+  const existing = await prisma.settings.findUnique({ where: { id: 1 } });
+  if (existing) return existing;
+
+  try {
+    return await prisma.settings.create({
+      data: { id: 1, usdToKrwRate: 1350, themeMode: "LIGHT" },
+    });
+  } catch {
+    return await prisma.settings.findUniqueOrThrow({ where: { id: 1 } });
+  }
 }
 
 export async function getSettings() {

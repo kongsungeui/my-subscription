@@ -36,11 +36,13 @@ npm install
 
 ## 3. 환경 변수 설정
 
+`.env`를 직접 수정합니다. `DATABASE_URL`은 Next.js 앱과 Prisma CLI가 모두 읽으므로 `.env`에 설정해야 합니다 (`.env.local`은 Prisma CLI가 읽지 않습니다).
+
 ```bash
-nano .env.local
+nano .env
 ```
 
-`.env.local` 내용:
+`.env` 내용:
 
 ```env
 # Docker로 실행 중인 PostgreSQL 접속 정보
